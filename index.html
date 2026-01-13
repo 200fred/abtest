@@ -46,15 +46,40 @@
   <button id="checkout">Go to checkout</button>
 
   <script>
+    const EXP_ID = "cart-ab-v1";
+    const KEY = "exp_cart_ab_v1_variant";
+
+    function assignVariant() {
+      const existing = localStorage.getItem(KEY);
+      if (existing === "A" || existing === "B") return existing;
+      const v = Math.random() < 0.5 ? "A" : "B";
+      localStorage.setItem(KEY, v);
+      return v;
+    }
+
+    const variant = assignVariant();
+
+    // Variant B: micro-copy to reduce cognitive effort
+    if (variant === "B") {
+      const note = document.createElement("div");
+      note.id = "microcopy";
+      note.style.marginTop = "8px";
+      note.style.fontSize = "14px";
+      note.textContent = "Takes ~2 minutes. Review before paying.";
+      document.body.appendChild(note);
+    }
+
+    // Track cart view (once)
     mixpanel.track("cart_viewed", {
-      experiment_id: "cart-ab-v1",
-      variant: "A"
+      experiment_id: EXP_ID,
+      variant: variant
     });
 
+    // Track checkout start
     document.getElementById("checkout").onclick = function () {
       mixpanel.track("checkout_started", {
-        experiment_id: "cart-ab-v1",
-        variant: "A"
+        experiment_id: EXP_ID,
+        variant: variant
       });
       alert("Checkout started");
     };
