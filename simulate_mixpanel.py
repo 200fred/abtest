@@ -32,7 +32,7 @@ def send_batch(events: list[dict]) -> None:
 def main():
     random.seed(42)
 
-    n_per_variant = 10  # smoke test: 10 A + 10 B
+    n_per_variant = 2276
     cr_a = 0.15
     cr_b = 0.18
 
