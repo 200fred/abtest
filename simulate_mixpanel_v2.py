@@ -78,3 +78,65 @@ def main():
     events = []
 
     for variant in ["A", "B"]:
+        for _ in range(N_PER_VARIANT):
+            distinct_id = str(uuid.uuid4())
+
+            country = weighted_choice(COUNTRIES)
+            device = weighted_choice(DEVICES)
+            browser = random.choice(BROWSERS)
+
+            # baseline CR with device skew
+            cr = BASE_CR
+            if device != "web":
+                cr *= 0.85  # mobile worse
+
+            if variant == "B":
+                cr *= (1 + UPLIFT)
+
+            # timestamps
+            t_cart = START_TIME + timedelta(
+                seconds=random.randint(0, 7 * 24 * 3600)
+            )
+
+            # cart viewed
+            events.append(mp_event(
+                "cart_viewed",
+                distinct_id,
+                t_cart,
+                {
+                    "experiment_id": EXP_ID,
+                    "variant": variant,
+                    "country": country,
+                    "device_type": device,
+                    "browser": browser,
+                }
+            ))
+
+            # conversion
+            if random.random() < cr:
+                delay = random.randint(15, 180) if variant == "B" else random.randint(30, 300)
+                t_checkout = t_cart + timedelta(seconds=delay)
+
+                events.append(mp_event(
+                    "checkout_started",
+                    distinct_id,
+                    t_checkout,
+                    {
+                        "experiment_id": EXP_ID,
+                        "variant": variant,
+                        "country": country,
+                        "device_type": device,
+                        "browser": browser,
+                        "time_to_checkout_sec": delay,
+                    }
+                ))
+
+    # send in batches
+    for i in range(0, len(events), 50):
+        send_batch(events[i:i+50])
+        time.sleep(0.15)
+
+    print(f"Sent {len(events)} events for experiment {EXP_ID}")
+
+if __name__ == "__main__":
+    main()
